@@ -1,6 +1,6 @@
 import LibraryItemModel from "../../models/library_item.model";
 import LibraryItemInstanceModel from "../../models/library_item_instance.model";
-import {Sequelize} from "sequelize";
+import {Op, Sequelize} from "sequelize";
 import {Application} from "../../declarations";
 import Author from "../../models/author.model";
 import LibraryItemInfoModel from "../../models/library_item_info.model";
@@ -79,12 +79,11 @@ class DonateBusinessService implements BaseService {
     const libraryItemModel = LibraryItemModel(this.app);
 
 
-
     const libraryItemInfo = await libraryItemInfoModel.findOne({
       where: {
         library_item_name: library_item_name,
         library_item_author_fk: library_item_author_fk,
-        library_item_published_date:moment(library_item_published_date, 'YYYY-MM-DD').format("YYYY-MM-DD")
+        library_item_published_date: moment(library_item_published_date, 'YYYY-MM-DD').format("YYYY-MM-DD")
       }
     })
 
@@ -133,7 +132,7 @@ class DonateBusinessService implements BaseService {
     const newItemInstanceOwnershipInstances = [];
     for (const resultSetItem of newInstanceList) {
       const createItemInput = {
-        library_item_instance_fk:resultSetItem.getDataValue('library_item_instance_id'),
+        library_item_instance_fk: resultSetItem.getDataValue('library_item_instance_id'),
         ownership_status_fk: 2,
         library_branch_fk: library_branch_fk,
         owner_fk: owner_fk,
@@ -164,6 +163,68 @@ class DonateBusinessService implements BaseService {
     return member?.getDataValue('library_branch_fk');
 
   }
+
+  async removeOldItems(daysCount: number) {
+    console.log(`remove old items grather than ${daysCount} days`)
+    const libraryItemInstanceOwnershipInformationModel = LibraryItemInstanceOwnershipInformationModel(this.app);
+    const libraryItemInstanceModel = LibraryItemInstanceModel(this.app);
+    const newInstanceList = await libraryItemInstanceOwnershipInformationModel.findAll({
+      where: {
+        createdAt: {
+          [Op.lte]: moment().subtract(daysCount, 'days').toDate()
+        }
+      },
+      attributes: ['library_item_instance_fk']
+    })
+    let instanceIdList = [];
+    for (const resultSetItem of newInstanceList) {
+      instanceIdList.push(resultSetItem.getDataValue('library_item_instance_fk'))
+    }
+    console.log(`instanceIdList size ${instanceIdList.length} `)
+
+    if (instanceIdList.length > 0) {
+      const updatesResult1 = await libraryItemInstanceModel.update(
+        {library_instance_status: 4},
+        {
+          where: {
+            library_item_instance_id: instanceIdList
+          }
+        }
+      );
+
+      console.log(`updatesResult1 is ${JSON.stringify(updatesResult1)} `)
+
+
+      const updatesResult2 = await libraryItemInstanceOwnershipInformationModel.update(
+        {is_deleted: true},
+        {
+          where: {
+            library_item_instance_fk: instanceIdList
+          }
+        }
+      );
+      console.log(`updatesResult2 is ${JSON.stringify(updatesResult2)} `)
+      if (updatesResult1 != undefined && updatesResult1 != null && updatesResult2 != null && updatesResult2 != undefined && updatesResult1 == updatesResult2) {
+        return {
+          "status": "OLD_ITEM_INSTANCE_REMOVED",
+          "description": `${updatesResult1} Items removed from intance and ownership table`,
+        }
+      } else {
+        return {
+          "status": "OLD_ITEM_NOT_FOUND",
+          "description": `${daysCount} ago added item not found`,
+        }
+      }
+    } else {
+      return {
+        "status": "OLD_ITEM_NOT_FOUND",
+        "description": `${daysCount} ago added item not found`,
+      }
+    }
+
+
+  }
+
 
 }
 

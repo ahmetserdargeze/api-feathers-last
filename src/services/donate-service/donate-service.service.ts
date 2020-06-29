@@ -17,6 +17,9 @@ export default function (app: Application) {
   app.use('/donate-service', {
     async create(params: any) {
       return await donateBusinessService.donateLibraryItemService(params);
+    },async remove(id:any,params: any) {
+      console.log(params);
+      return await donateBusinessService.removeOldItems(params.query.day_count);
     }
   })
   // Get our initialized service so that we can register hooks

@@ -5,7 +5,7 @@ export default function (app: Application) {
   const connectionString = app.get('postgres');
   const sequelize = new Sequelize(connectionString, {
     dialect: 'postgres',
-    logging: false,
+    logging: true,
     define: {
       freezeTableName: true,
       schema: 'public'

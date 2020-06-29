@@ -8,7 +8,7 @@ export default function LibraryItemInstanceOwnershipInformationModel(app: Applic
   const libraryItemInstanceOwnershipInformation = sequelizeClient.define('library_item_instance_ownership_information', {
     library_item_instance_fk: {
       type: DataTypes.UUIDV4,
-      primaryKey:true,
+      primaryKey: true,
       references: {
         model: "library_item_instance",
         key: "library_item_instance_id"
@@ -31,6 +31,9 @@ export default function LibraryItemInstanceOwnershipInformationModel(app: Applic
         model: "library_branch",
         key: "library_id"
       }
+    }, is_deleted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
     }
   }, {
     hooks: {

@@ -22,7 +22,7 @@ export default function LibraryItemInfoModel(app: Application) {
       }
     },
     library_item_published_date: {
-      type: DataTypes.DATE,
+      type: DataTypes.DATEONLY,
       allowNull: false
     },
     library_item_name: {

@@ -47,6 +47,7 @@
     "cors": "^2.8.5",
     "generator-feathers": "^4.2.0",
     "helmet": "^3.23.3",
+    "moment": "^2.27.0",
     "pg": "^8.2.1",
     "sequelize": "^6.2.3",
     "serve-favicon": "^2.5.0",

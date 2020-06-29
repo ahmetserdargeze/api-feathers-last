@@ -88,13 +88,13 @@ class RentBusinessService implements BaseService {
   private async updateStatusItemInstance(status: number, libraryItemInstanceId: string) {
     console.log(`library item intance   update start status:${status} and libraryItemInstanceId id:${libraryItemInstanceId}`)
     const libraryItemInstanceModel = LibraryItemInstanceModel(this.app);
-     const abc = await libraryItemInstanceModel.update(
+    await libraryItemInstanceModel.update(
         {library_instance_status: status},
         {where: {library_item_instance_id: libraryItemInstanceId}}
       );
 
 
-    console.log(`library item intance end with result :${abc}`)
+    console.log(`library item intance`)
 
   }
 

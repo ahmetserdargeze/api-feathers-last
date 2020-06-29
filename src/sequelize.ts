@@ -8,7 +8,7 @@ export default function (app: Application) {
     logging: false,
     define: {
       freezeTableName: true,
-      schema: 'LibraryAutomation'
+      schema: 'public'
     }
   });
   const oldSetup = app.setup;

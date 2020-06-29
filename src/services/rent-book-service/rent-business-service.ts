@@ -18,14 +18,10 @@ interface createRentBookServiceInput {
 
 }
 
-interface createRentBookServiceResponse {
-
+interface giveBackLibraryItemInput {
   "library_item_instance_history_id": string,
-  "is_active": boolean,
-  "library_item_instance_fk": string,
-  "library_item_instance_renter_fk": string,
-  "rent_start_date": Date
-  "rent_end_date": Date
+  "library_item_instance_id": string,
+  "renter_member_id": string
 
 }
 
@@ -90,11 +86,27 @@ class RentBusinessService implements BaseService {
   }
 
   private async updateStatusItemInstance(status: number, libraryItemInstanceId: string) {
+    console.log(`library item intance   update start status:${status} and libraryItemInstanceId id:${libraryItemInstanceId}`)
     const libraryItemInstanceModel = LibraryItemInstanceModel(this.app);
-    libraryItemInstanceModel.update(
-      {library_instance_status: 2},
-      {where: {library_item_instance_id: libraryItemInstanceId}}
+     const abc = await libraryItemInstanceModel.update(
+        {library_instance_status: status},
+        {where: {library_item_instance_id: libraryItemInstanceId}}
+      );
+
+
+    console.log(`library item intance end with result :${abc}`)
+
+  }
+
+  private async updateStatusItemHistory(status: boolean, library_item_instance_history_id: string) {
+    console.log(`library item intance history  update start status:${status} and history id:${library_item_instance_history_id}`)
+    const libraryItemInstanceHistoryModel = LibraryItemInstanceHistoryModel(this.app);
+    await libraryItemInstanceHistoryModel.update(
+      {is_active: status, rent_end_date: new Date()},
+      {where: {library_item_instance_history_id: library_item_instance_history_id}}
     );
+    console.log(`library item intance history success`);
+
   }
 
   private async holdAnItem(itemId: String, renterFk: string) {
@@ -120,6 +132,126 @@ class RentBusinessService implements BaseService {
 
       }
     }
+  }
+
+
+  private async findLibraryItemIdWithInstanceId(library_item_instance_id: string) {
+    const lib = LibraryItemInstanceModel(this.app);
+    const libraryItemInstance = await lib.findOne({
+      where: {
+        library_item_instance_id: library_item_instance_id
+      }
+    });
+
+    const libraryItemId = libraryItemInstance?.getDataValue("library_item_fk");
+    console.log(`libraryItemId is :${libraryItemId}`);
+    if (libraryItemId != undefined) {
+      return libraryItemId;
+    } else {
+      console.log("Item not found")
+      return null;
+    }
+  }
+
+
+  async giveBackLibraryItem(params: giveBackLibraryItemInput) {
+    try {
+      await this.updateStatusItemHistory(false, params.library_item_instance_history_id);
+      await this.updateStatusItemInstance(1, params.library_item_instance_id);
+      console.log("give back  update operation success")
+      const libraryItemId = await this.findLibraryItemIdWithInstanceId(params.library_item_instance_id);
+      if (libraryItemId != null) {
+        const onHoldResponse = await this.onHoldConvertToRent(libraryItemId, params.library_item_instance_id);
+        if (onHoldResponse != undefined && onHoldResponse != null) {
+          if (onHoldResponse.rentedMemberFk != "") {
+            await this.updateOnHoldStatus(libraryItemId, params.renter_member_id, false);
+            return {
+              "status": "GIVE_BACK_SUCCESS_ON_HOLD_SUCCESS",
+              "description": "Item giveback  operation success and waiter operation execute with success",
+              "details": {
+                "renter_member_fk": onHoldResponse.rentedMemberFk,
+                "rented_item_instance_fk": params.library_item_instance_id
+              }
+            }
+          } else {
+            return {
+              "status": "GIVE_BACK_SUCCESS_ON_HOLD_SUCCESS",
+              "description": "Item giveback  operation success and waiter operation execute with success but any waiters found",
+            }
+          }
+
+        } else {
+          return {
+            "status": "GIVE_BACK_SUCCESS_ON_HOLD_ERROR",
+            "description": "Item giveback  operation success and waiter operation execute with error",
+          }
+        }
+
+
+      } else {
+        return {
+          "status": "GIVE_BACK_SUCCESS",
+          "description": "Item giveback  operation success and waiter operation not apply",
+        }
+      }
+    }
+    catch (e) {
+      console.log("give back operation failed"+e)
+      return {
+        "status": "GIVE_BACK_ERROR",
+        "description": "Item giveback update operation failed please try again",
+      }
+    }
+
+  }
+
+  private async updateOnHoldStatus(libraryItemFk: string, member_fk: string, is_active: boolean) {
+    console.log(`updateOnHoldStatus start is_active:${is_active} and item id:${libraryItemFk} and member id : ${member_fk}`)
+    const libraryItemOnHoldHistoryModel = LibraryItemOnHoldHistoryModel(this.app);
+    await libraryItemOnHoldHistoryModel.update(
+      {is_active: is_active, update_date: new Date()},
+      {where: {library_item_fk: libraryItemFk, on_hold_member_fk: member_fk}}
+    );
+    console.log(`updateOnHoldStatus end`);
+  }
+
+
+  private async onHoldConvertToRent(library_item_id: string, library_instance_id: string) {
+    const libraryItemOnHolder = LibraryItemOnHoldHistoryModel(this.app);
+    const libraryItemInstanceHistory = LibraryItemInstanceHistoryModel(this.app);
+    const onHolderItem = await libraryItemOnHolder.findOne({
+      where: {
+        library_item_fk: library_item_id
+      },
+      order: [
+        ['create_date', 'ASC'],
+      ],
+    })
+    const memberFk = onHolderItem?.getDataValue('on_hold_member_fk');
+    if (onHolderItem != undefined && memberFk != undefined) {
+      console.log(`libraryItem holder  find member fk :  ${memberFk}`);
+      const createInput = {
+        library_item_instance_fk: library_instance_id,
+        library_item_instance_renter_fk: memberFk
+      }
+      try {
+        await libraryItemInstanceHistory.create(createInput);
+        await this.updateStatusItemInstance(2, library_instance_id);
+        return {
+          rentedMemberFk: memberFk
+        }
+      } catch (e) {
+        console.log(`error occured from create library item instance or update item instance status ${e}`);
+        return null;
+      }
+    } else {
+      console.log(`on hold queue is empty`);
+      return {
+        rentedMemberFk: ""
+      }
+    }
+
+
   }
 }
 

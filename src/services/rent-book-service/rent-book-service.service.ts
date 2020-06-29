@@ -6,28 +6,15 @@ import LibraryBranch from "../../models/library_branch.model";
 import RentBusinessService from "./rent-business-service"
 
 
-
 export default function (app: Application) {
 
   const rentBusinessService = new RentBusinessService(app)
 
   app.use('/rent-book-service', {
     async create(params: any) {
-    return  await rentBusinessService.createRentABookService(params);
-    }, async get(id: Id, params?: Params): Promise<any> {
-      return "test"
-    }, async find(params?: Params): Promise<any> {
-      const lib = LibraryBranch(app);
-      const resp = await lib.create({
-        "library_name": "asdasdasd"
-      });
-      const deneme = await lib.findAll({
-        where: {
-          library_name: "aaaa"
-        }
-      })
-      return Promise.resolve(deneme);
-
+      return await rentBusinessService.createRentABookService(params);
+    }, async update(data: any, params: any) {
+      return await rentBusinessService.giveBackLibraryItem(params);
     }
   })
 

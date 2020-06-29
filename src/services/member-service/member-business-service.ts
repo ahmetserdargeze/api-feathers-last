@@ -54,8 +54,6 @@ class MemberBusinessService implements BaseService {
         "description": ` You are  not register our library please check your information`,
       }
     }
-
-
   }
 }
 

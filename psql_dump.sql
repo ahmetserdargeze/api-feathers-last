@@ -122,11 +122,10 @@ alter table library_item_instance_history
 
 create table ownership_status
 (
-    ownership_status_type        integer default nextval(
-            '"LibraryAutomation".ownership_status_ownership_status_type_seq'::regclass) not null
+    ownership_status_type        integer default nextval('ownership_status_ownership_status_type_seq'::regclass) not null
         constraint ownership_status_pk
             primary key,
-    ownership_status_description varchar                                                not null
+    ownership_status_description varchar                                                                         not null
 );
 
 alter table ownership_status
@@ -149,7 +148,8 @@ create table library_item_instance_ownership_information
         constraint library_item_instance_ownership_information_library_branch_libr
             references library_branch,
     "createdAt"              timestamp not null,
-    "updatedAt"              timestamp
+    "updatedAt"              timestamp,
+    is_deleted               boolean default false
 );
 
 alter table library_item_instance_ownership_information
@@ -202,45 +202,142 @@ create table library_item_on_hold_history
 alter table library_item_on_hold_history
     owner to postgres;
 
-create table users
-(
-    id          serial                   not null
-        constraint users_pkey
-            primary key,
-    email       varchar(255)             not null
-        constraint users_email_key
-            unique,
-    password    varchar(255)             not null,
-    "createdAt" timestamp with time zone not null,
-    "updatedAt" timestamp with time zone not null
-);
+create function uuid_nil() returns uuid
+    immutable
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
 
-alter table users
-    owner to postgres;
+alter function uuid_nil() owner to postgres;
 
-create table library_business_service
-(
-    id          serial                   not null
-        constraint library_business_service_pkey
-            primary key,
-    text        varchar(255)             not null,
-    "createdAt" timestamp with time zone not null,
-    "updatedAt" timestamp with time zone not null
-);
+create function uuid_ns_dns() returns uuid
+    immutable
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
 
-alter table library_business_service
-    owner to postgres;
+alter function uuid_ns_dns() owner to postgres;
 
-create table rentabook
-(
-    id          serial                   not null
-        constraint rentabook_pkey
-            primary key,
-    text        varchar(255)             not null,
-    "createdAt" timestamp with time zone not null,
-    "updatedAt" timestamp with time zone not null
-);
+create function uuid_ns_url() returns uuid
+    immutable
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
 
-alter table rentabook
-    owner to postgres;
+alter function uuid_ns_url() owner to postgres;
 
+create function uuid_ns_oid() returns uuid
+    immutable
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
+
+alter function uuid_ns_oid() owner to postgres;
+
+create function uuid_ns_x500() returns uuid
+    immutable
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
+
+alter function uuid_ns_x500() owner to postgres;
+
+create function uuid_generate_v1() returns uuid
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
+
+alter function uuid_generate_v1() owner to postgres;
+
+create function uuid_generate_v1mc() returns uuid
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
+
+alter function uuid_generate_v1mc() owner to postgres;
+
+create function uuid_generate_v3(namespace uuid, name text) returns uuid
+    immutable
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
+
+alter function uuid_generate_v3(uuid, text) owner to postgres;
+
+create function uuid_generate_v4() returns uuid
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
+
+alter function uuid_generate_v4() owner to postgres;
+
+create function uuid_generate_v5(namespace uuid, name text) returns uuid
+    immutable
+    strict
+    parallel safe
+    language c
+as
+$$
+begin
+-- missing source code
+end;
+$$;
+
+alter function uuid_generate_v5(uuid, text) owner to postgres;
+
+INSERT INTO public.author (author_id, author_name) VALUES ('e57fb1be-ffb8-4137-979b-bcb6b71e633c', 'Test Author');
+INSERT INTO public.author (author_id, author_name) VALUES ('ce8d43ab-1157-40c4-b68d-bebdd5e57de4', 'ahmetserdar geze');
